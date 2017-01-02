@@ -45,10 +45,12 @@ def HKY85(time,alpha,beta,T,C,A,G,nt):
              new_dna[base] = weightedChoice([r,s,l,m],['T','C','A','G'])
         elif dna_seq[base] == 'G':
              new_dna[base] = weightedChoice([r,s,n,o],['T','C','A','G'])
+        else:
+             print dna_seq
     return new_dna
 
 def baseToColor(new_dna):
-    dna_color = new_dna
+    dna_color = [""] * len(new_dna)
     for base in range(len(new_dna)):
         if new_dna[base] == 'T':
             dna_color[base] = "red"
@@ -92,20 +94,20 @@ def update():
     """
 
     global ind
+    global DNA
+
     #leds = [["blue"] * 8 for _ in xrange(10)];
     #leds = [["blue","blue","red","red","blue","blue","blue","blue"] for _ in xrange(10)];
     #leds[0][ind] = "green"
     #ind = (ind + 1) % 8
-    new_DNA = HKY85(1,0.3,0.1,.35,.3,.25,.1,DNA)
-    color = baseToColor(new_DNA)
+    DNA = HKY85(.1,0.3,0.1,.35,.3,.25,.1,DNA)
+    color = baseToColor(DNA)
     leds = [[color[0],color[1],color[2],color[3]] for _ in xrange(1)];
     plot_leds(canvas, leds)
     root.after(100, update)
 
-#eventually make the time input a variable
-
-mutatedDNA = HKY85(1,0.3,0.1,.35,.3,.25,.1,["A","A","T","A"])
-DNA = HKY85(1,0.3,0.1,.35,.3,.25,.1,mutatedDNA)
+mutatedDNA = HKY85(.001,0.3,0.1,.35,.3,.25,.1,["A","A","T","A"])
+DNA = HKY85(0.001,0.3,0.1,.35,.3,.25,.1,mutatedDNA)
 #color = baseToColor(DNA)
 root.after(10, update)    
 root.wm_title("LED Grid")
