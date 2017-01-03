@@ -49,18 +49,15 @@ def HKY85(time,alpha,beta,T,C,A,G,nt):
              print dna_seq
     return new_dna
 
-def baseToColor(new_dna):
-    dna_color = [""] * len(new_dna)
-    for base in range(len(new_dna)):
-        if new_dna[base] == 'T':
-            dna_color[base] = "red"
-        elif new_dna[base] == 'C':
-            dna_color[base] = "blue"
-        elif new_dna[base] == 'A':
-            dna_color[base] = "yellow"
-        elif new_dna[base] == 'G':
-            dna_color[base] = "green"
-    return dna_color
+def baseToColor(dna_seq):
+    """Returns the list of colors associated with given list of nucleotides"""
+    colormap = {'T':"red", 'C':"blue", 'A':"yellow", 'G':"green"}
+    return [colormap[nt] for nt in dna_seq]
+
+def complement(dna_seq):
+    """Returns the complement of the given dna sequence"""
+    compmap = {'T':'A', 'A':'T', 'C':'G', 'G':'C'}
+    return [compmap[nt] for nt in dna_seq]
     
 def weightedChoice(weights,objects):
     return next(compress(objects,multinomial(1, weights,1)[0]))
@@ -69,46 +66,88 @@ def weightedChoice(weights,objects):
 root = tk.Tk()
 canvas = tk.Canvas(root, width=600, height=600, borderwidth=0, highlightthickness=0, bg="black")
 canvas.grid()
-ind = 0
 
 def _create_circle(self, x, y, r, **kwargs):
     return self.create_oval(x-r, y-r, x+r, y+r, **kwargs)
 tk.Canvas.create_circle = _create_circle
 
 
-def plot_leds(canvas, led_colors):
-    """Plots the 2d led_colors array as circles in a grid on a canvas"""
+def plot_leds(canvas, led_colors, comp_colors):
+    """Plots the led_colors array as circles in a grid on a canvas"""
     canvas.delete("all")
     y_off = 100
+    x_off = 20
+    ind = 0;
 
-    for row in led_colors:
-        x_off = 100
-        for color in row:
-            canvas.create_circle(x_off, y_off, 10, fill=color)
-            x_off += 50
-        y_off += 50
+    for color in led_colors:
+        canvas.create_circle(x_off, y_off + 3*sin(ind*.57), 3, fill=color)
+        canvas.create_circle(x_off, y_off + 3*sin(ind*.57 + 2.4), 3, fill=comp_colors[ind])
+        x_off += 10
+        ind += 1
+
+def plot_leds_on_curve(canvas, led_colors, comp_colors, curve):
+    """Plots the led_colors array as a dna helix following the given curve
+    
+    curve -- parametric curve: (x,y) = curve(t)
+    tangent -- the derivative of curve: (dx, dy) = tangent(dt)
+    """
+    canvas.delete("all")
+    ind = 0
+    eps = 0.0001
+    x_off = 300
+    y_off = 300
+    ratio = 1.0/len(led_colors)
+
+    for ind in xrange(len(led_colors)):
+    # for ind in xrange(30,60):
+        t = ind*ratio;
+        (x,y) = heart_curve(t);
+        (dx, dy) = curve(t+eps)
+
+        dx = (dx - x)/eps
+        dy = (dy - y)/eps
+
+        dxp = dx/sqrt(dx*dx + dy*dy)
+        dy = dy/sqrt(dx*dx + dy*dy)
+        dx = dxp
+        x = x + x_off
+        y = y + y_off
+        tx = dy
+        ty = -dx
+
+        
+        h = 10*sin(ind*.57)
+        canvas.create_circle(x + tx*h, y + ty*h, 2, fill=led_colors[ind])
+        h = 10*sin(ind*.57 + 2.4)
+        canvas.create_circle(x + tx*h, y + ty*h, 2, fill=comp_colors[ind])
+
+
+def heart_curve(t):
+    t = t*2*pi
+    x = 16*pow(sin(t),3)
+    y = 13*cos(t) - 5*cos(2*t) - 2*cos(3*t) - cos(4*t)
+    return (15*x,-15*y)
+    
+        
+def plot_dna(canvas, dna):
+    colors = baseToColor(dna)
+    comp_colors = baseToColor(complement(dna))
+    # plot_leds(canvas, colors, comp_colors)
+    plot_leds_on_curve(canvas, colors, comp_colors, heart_curve)
 
 def update():
     """Replots the LEDs circles
-    Recalls itself every 100 millis
+    Recalls itself
     """
 
-    global ind
     global DNA
 
-    #leds = [["blue"] * 8 for _ in xrange(10)];
-    #leds = [["blue","blue","red","red","blue","blue","blue","blue"] for _ in xrange(10)];
-    #leds[0][ind] = "green"
-    #ind = (ind + 1) % 8
-    DNA = HKY85(.1,0.3,0.1,.35,.3,.25,.1,DNA)
-    color = baseToColor(DNA)
-    leds = [[color[0],color[1],color[2],color[3]] for _ in xrange(1)];
-    plot_leds(canvas, leds)
+    DNA = HKY85(.02,0.3,0.1,.35,.3,.25,.1,DNA)
+    plot_dna(canvas, DNA)
     root.after(100, update)
 
-mutatedDNA = HKY85(.001,0.3,0.1,.35,.3,.25,.1,["A","A","T","A"])
-DNA = HKY85(0.001,0.3,0.1,.35,.3,.25,.1,mutatedDNA)
-#color = baseToColor(DNA)
+DNA = HKY85(10,0.3,0.1,.35,.3,.25,.1,["A"]*300)
+
 root.after(10, update)    
 root.wm_title("LED Grid")
 root.mainloop()
