@@ -1,5 +1,6 @@
 # import matplotlib.pyplot as plt
 import Tkinter as tk
+import time
 from math import *
 import random
 from itertools import compress
@@ -115,10 +116,10 @@ def plot_leds_on_curve(canvas, led_colors, comp_colors, curve):
         tx = dy
         ty = -dx
 
-        
-        h = 10*sin(ind*.57)
+
+        h = 10*sin(ind*.57 + time.time()*1.5)
         canvas.create_circle(x + tx*h, y + ty*h, 2, fill=led_colors[ind])
-        h = 10*sin(ind*.57 + 2.4)
+        h = 10*sin(ind*.57 + 2.4 + time.time()*1.5)
         canvas.create_circle(x + tx*h, y + ty*h, 2, fill=comp_colors[ind])
 
 
@@ -142,9 +143,9 @@ def update():
 
     global DNA
 
-    DNA = HKY85(.02,0.3,0.1,.35,.3,.25,.1,DNA)
+    DNA = HKY85(2,0.3,0.1,.35,.3,.25,.1,DNA)
     plot_dna(canvas, DNA)
-    root.after(100, update)
+    root.after(30, update)
 
 DNA = HKY85(10,0.3,0.1,.35,.3,.25,.1,["A"]*300)
 
